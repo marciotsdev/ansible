@@ -1,0 +1,33 @@
+---
+- name: Atualizar sistema operacional
+  hosts: ec2_instances
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Atualizar cache e todos os pacotes
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+        update_cache: true
+
+    - name: Verificar se reboot é necessário
+      ansible.builtin.command: needs-restarting -r
+      register: reboot_check
+      failed_when: false
+      changed_when: false
+
+    - name: Reiniciar instância se kernel foi atualizado
+      ansible.builtin.reboot:
+        reboot_timeout: 300
+        msg: "Reboot iniciado pelo Ansible após atualização de pacotes"
+      when: reboot_check.rc == 1
+
+    - name: Confirmar versão do kernel após atualização
+      ansible.builtin.command: uname -r
+      register: kernel_version
+      changed_when: false
+
+    - name: Exibir versão do kernel
+      ansible.builtin.debug:
+        msg: "Kernel ativo: {{ kernel_version.stdout }}"
