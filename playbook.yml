@@ -1,0 +1,5 @@
+name: Default Playbook - Starting Deply
+hosts: all
+#connection: local
+roles:
+  - example
